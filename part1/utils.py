@@ -47,7 +47,7 @@ def custom_transform(example):
     neighbor = {"q": "wsa", "w": "qasde", "e": "wsdfr", "r": "edfgt", "t": "rfghy", "y": "tghju", "u": "yhjki", "i": "ujklo", "o": "iklp", "p": "ol", "a": "qwsz", "s": "qweadzx", "d": "wersfxc", "f": "ertdgcv", "g": "rtyfhvb", "h": "tyugjbn", "j": "yuihknm", "k": "uiojlm", "l": "iopk", "z": "asx", "x": "sdzc", "c": "dfxv", "v": "fgcb", "b": "ghvn", "n": "hjbm", "m": "jkn"}
     for i, word in enumerate(example_list):
       chance = random.random()
-      if chance >= 0.8:
+      if chance >= 0.7:
       # adding a typo
         random_idx = random.randrange(len(word))
         rand_letter = word[random_idx]
