@@ -139,6 +139,7 @@ def eval_epoch(args, model, dev_loader, gt_sql_pth, model_sql_path, gt_record_pa
     we found the cross-entropy loss (in the evaluation set) to be well (albeit imperfectly) correlated with F1 performance.
     '''
     
+    # Move the tensors you need to DEVICE, then calculate dev loss.
     total_loss = 0.0
     total_token = 0
     all_queries = []
@@ -146,25 +147,23 @@ def eval_epoch(args, model, dev_loader, gt_sql_pth, model_sql_path, gt_record_pa
     tokenizer = dev_loader.dataset.tokenizer
     for batch in dev_loader:
 
-        encoder_input, encoder_mask, decoder_input, decoder_targets, initial_decoder_inputs = batch
-        encoder_input = encoder_input.to(DEVICE)
-        encoder_mask = encoder_mask.to(DEVICE)
-        decoder_input = decoder_input.to(DEVICE)
-        decoder_targets = decoder_targets.to(DEVICE)
-        with torch.no_grad():
-            #pred
-            logits = model(input_ids=encoder_input,attention_mask=encoder_mask,decoder_input_ids=decoder_input)["logits"]
-            non_pad = decoder_targets != PAD_IDX # select the indices for non-pad in later loss
-            loss = nn.CrossEntropyLoss()(logits[non_pad], decoder_targets[non_pad])
+      encoder_input, encoder_mask, decoder_input, decoder_targets, initial_decoder_inputs = batch
+      encoder_input = encoder_input.to(DEVICE)
+      encoder_mask = encoder_mask.to(DEVICE)
+      decoder_input = decoder_input.to(DEVICE)
+      decoder_targets = decoder_targets.to(DEVICE)
+      with torch.no_grad():
+        logits = model(input_ids=encoder_input,attention_mask=encoder_mask,decoder_input_ids=decoder_input,)["logits"]
+        non_pad = decoder_targets != PAD_IDX
+        loss = nn.CrossEntropyLoss()(logits[non_pad], decoder_targets[non_pad])
 
-            generated_ids = model.generate(input_ids=encoder_input, attention_mask=encoder_mask, decoder_input_ids=initial_decoder_inputs.to(DEVICE),max_new_tokens=512, num_beams=4, do_sample=False)
-            generated_sql = tokenizer.batch_decode(generated_ids, skip_special_tokens= True)
+        generated_ids = model.generate(input_ids=encoder_input, attention_mask=encoder_mask, decoder_input_ids=initial_decoder_inputs.to(DEVICE),max_new_tokens=512, num_beams=4, do_sample=False)
+        generated_sql = tokenizer.batch_decode(generated_ids, skip_special_tokens= True)
 
-            all_queries.extend(generated_sql)
-            number_example = non_pad.sum().item()
-            total_loss += loss.item() * number_example
-            total_token += number_example
-
+        all_queries.extend(generated_sql)
+        number_example = non_pad.sum().item()
+        total_loss += loss.item() * number_example
+        total_token += number_example
     avg = total_loss / total_token
 
     save_queries_and_records(all_queries, model_sql_path, model_record_path)
@@ -179,28 +178,7 @@ def test_inference(args, model, test_loader, model_sql_path, model_record_path):
     You must implement inference to compute your model's generated SQL queries and its associated 
     database records. Implementation should be very similar to eval_epoch.
     '''
-
-    all_queries = []
-    model.eval()
-    tokenizer = test_loader.dataset.tokenizer
-    for batch in test_loader:
-
-        encoder_input, encoder_mask, initial_decoder_inputs = batch
-        encoder_input = encoder_input.to(DEVICE)
-        encoder_mask = encoder_mask.to(DEVICE)
-        initial_decoder_inputs = initial_decoder_inputs.to(DEVICE)
-
-        with torch.no_grad():
-            
-            generated_ids = model.generate(input_ids=encoder_input, attention_mask=encoder_mask, decoder_input_ids=initial_decoder_inputs.to(DEVICE),max_new_tokens=512, num_beams=4, do_sample=False)
-            generated_sql = tokenizer.batch_decode(generated_ids, skip_special_tokens= True)
-
-            for query in generated_sql:
-                all_queries.append(" ".join(query.splitlines()).strip())
-
-    save_queries_and_records(all_queries, model_sql_path, model_record_path)
-
-
+    pass
 
 def main():
     # Get key arguments

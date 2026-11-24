@@ -20,7 +20,14 @@ def initialize_model(args):
     or training a T5 model initialized with the 'google-t5/t5-small' config
     from scratch.
     '''
-    model = T5ForConditionalGeneration.from_pretrained("google-t5/t5-small")
+    if args.finetune:
+        model = T5ForConditionalGeneration.from_pretrained(
+            "google-t5/t5-small"
+        )
+    else:
+        config = T5Config.from_pretrained("google-t5/t5-small")
+        model = T5ForConditionalGeneration(config)
+
     return model.to(DEVICE)
 
 
@@ -32,7 +39,7 @@ def mkdir(dirpath):
             pass
 
 def save_model(checkpoint_dir, model, best):
-    # Save model checkpoint in case it gets killed for timeout
+    # Save model checkpoint to be able to load the model later
     folder = "best" if best else "latest"
     path = os.path.join(checkpoint_dir, folder)
     model.save_pretrained(path)

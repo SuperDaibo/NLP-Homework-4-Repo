@@ -7,7 +7,6 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
 import nltk
-nltk.download('punkt')
 from transformers import T5TokenizerFast
 import torch
 
@@ -165,7 +164,7 @@ def test_collate_fn(batch):
     for ids in encoder_ids:
         row_temp = []
         for token in ids:
-            if token[0] != PAD_IDX:
+            if token != PAD_IDX:
                 row_temp.append(1)
             else:
                 row_temp.append(0)
