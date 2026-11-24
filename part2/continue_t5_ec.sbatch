@@ -59,15 +59,10 @@ train_loader, dev_loader, _ = t.load_t5_data(
     args.batch_size, args.test_batch_size
 )
 
-# Load weights descended from the randomly initialized scratch model.
-model = T5ForConditionalGeneration.from_pretrained(
-    source
-).to(t.DEVICE)
+model = T5ForConditionalGeneration.from_pretrained(source).to(t.DEVICE)
 
 # The continuation uses a new optimizer and scheduler.
-optimizer, scheduler = t.initialize_optimizer_and_scheduler(
-    args, model, len(train_loader)
-)
+optimizer, scheduler = t.initialize_optimizer_and_scheduler(args, model, len(train_loader))
 
 def evaluate(model, suffix):
     return t.eval_epoch(
@@ -75,8 +70,7 @@ def evaluate(model, suffix):
         "data/dev.sql",
         f"results/{name}_{suffix}.sql",
         "records/ground_truth_dev.pkl",
-        f"records/{name}_{suffix}.pkl",
-    )
+        f"records/{name}_{suffix}.pkl")
 
 # Preserve the starting model as the initial best candidate.
 baseline = evaluate(model, "baseline_dev")
@@ -87,15 +81,9 @@ print("BASELINE DEV:", baseline, flush=True)
 epochs_without_improvement = 0
 
 for epoch in range(args.max_n_epochs):
-    train_loss = t.train_epoch(
-        args, model, train_loader, optimizer, scheduler
-    )
-    print(
-        f"Continuation epoch {epoch}: train loss={train_loss}",
-        flush=True,
-    )
+    train_loss = t.train_epoch(args, model, train_loader, optimizer, scheduler)
+    print(f"Continuation epoch {epoch}: train loss={train_loss}", flush=True)
 
-    # Save completed training progress before development evaluation.
     t.save_model(checkpoint_dir, model, best=False)
 
     metrics = evaluate(model, "dev")
@@ -105,8 +93,7 @@ for epoch in range(args.max_n_epochs):
         f"Dev loss={loss}, Record F1={f1}, "
         f"Record EM={record_em}, SQL EM={sql_em}, "
         f"Execution error rate={error_rate}",
-        flush=True,
-    )
+        flush=True)
 
     if f1 > best_f1:
         best_f1 = f1
@@ -125,8 +112,8 @@ final_metrics = evaluate(model, "best_dev")
 print(
     "BEST DEV (loss, F1, record EM, SQL EM, error rate):",
     final_metrics,
-    flush=True,
-)
+    flush=True)
+
 print("Best development F1 observed:", best_f1, flush=True)
 print("Finished. No test predictions generated.", flush=True)
 PY
