@@ -178,7 +178,25 @@ def test_inference(args, model, test_loader, model_sql_path, model_record_path):
     You must implement inference to compute your model's generated SQL queries and its associated 
     database records. Implementation should be very similar to eval_epoch.
     '''
-    pass
+    model.eval()
+    tokenizer = test_loader.dataset.tokenizer
+    all_queries = []
+
+    with torch.no_grad():
+        for encoder_input, encoder_mask, initial_decoder_inputs in tqdm(
+            test_loader, desc="Generating test SQL"
+        ):
+            generated_ids = model.generate(
+                input_ids=encoder_input.to(DEVICE),
+                attention_mask=encoder_mask.to(DEVICE),
+                decoder_input_ids=initial_decoder_inputs.to(DEVICE),
+                num_beams=4, do_sample=False, max_new_tokens=512)
+
+            generated_sql = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            all_queries.extend(generated_sql)
+
+
+    save_queries_and_records(all_queries, model_sql_path, model_record_path)
 
 def main():
     # Get key arguments
